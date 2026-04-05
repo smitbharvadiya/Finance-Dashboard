@@ -27,10 +27,16 @@ const Login = () => {
             const res = await fetch("http://localhost:3000/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify(formData)
             });
 
             const data = await res.json();
+
+            if(!res.ok){
+                setMessage(data.message || "Login failed. Try again.");
+                return;
+            }
 
             setMessage(data.message || "Welcome back.");
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Mail, Lock, User, Fingerprint, ChevronDown } from "lucide-react";
+import { ArrowRight, Mail, Lock, User, Fingerprint } from "lucide-react";
 
 const Register = () => {
 
@@ -10,7 +10,6 @@ const Register = () => {
         name: "",
         email: "",
         password: "",
-        role: "viewer",
     });
 
     const [loading, setLoading] = useState(false);
@@ -33,10 +32,20 @@ const Register = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify(formData),
+                credentials: "include",
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                }),
             });
 
             const data = await res.json();
+
+            if(!res.ok){
+                setMessage(data.message || "Registration failed. Try again.");
+                return;
+            }
 
             setMessage(data.message || "Registered Successfully");
 
@@ -44,7 +53,6 @@ const Register = () => {
                 name: "",
                 email: "",
                 password: "",
-                role: "viewer",
             });
 
             navigate("/dashboard");
@@ -60,7 +68,7 @@ const Register = () => {
 
     return (
         <div className="min-h-screen bg-white text-slate-900 flex items-center justify-center font-[-apple-system,BlinkMacSystemFont,'Segoe_UI',Roboto,sans-serif]">
-            {/* Top Navigation Mock - For the 'Sleek' vibe */}
+            
             <nav className="absolute top-0 w-full p-8 flex justify-between items-center">
                 <div className="flex items-center gap-2" onClick={() => navigate("/")}>
                     <div className="w-6 h-6 bg-black rounded-full" />
@@ -106,7 +114,6 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Email */}
                         <div className="relative border-b border-slate-100 focus-within:border-black transition-colors group">
                             <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Email Address</label>
                             <div className="flex items-center">
@@ -123,7 +130,6 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Password */}
                         <div className="relative border-b border-slate-100 focus-within:border-black transition-colors group">
                             <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Password</label>
                             <div className="flex items-center">
@@ -140,23 +146,6 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Role - Minimal Select */}
-                        <div className="relative border-b border-slate-100 focus-within:border-black transition-colors group">
-                            <label className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Access Level</label>
-                            <div className="flex items-center relative">
-                                <select
-                                    name="role"
-                                    value={formData.role}
-                                    onChange={handleChange}
-                                    className="w-full py-3 bg-transparent text-sm focus:outline-none appearance-none cursor-pointer"
-                                >
-                                    <option value="viewer">Viewer</option>
-                                    <option value="analyst">Analyst</option>
-                                    <option value="admin">Administrator</option>
-                                </select>
-                                <ChevronDown size={14} className="absolute right-0 pointer-events-none text-slate-300 group-focus-within:text-black" />
-                            </div>
-                        </div>
                     </div>
 
                     <button

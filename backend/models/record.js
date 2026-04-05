@@ -9,6 +9,12 @@ const recordSchema = new Schema({
     required: true,
   },
 
+  transactionId: {
+    type: String,
+    unique: true,
+    default: () => "TRX-" + Date.now() + "-" + Math.floor(Math.random() * 1000)
+  },
+
   amount: {
     type: Number,
     required: true,
@@ -22,6 +28,13 @@ const recordSchema = new Schema({
 
   category: {
     type: String,
+    required: true,
+  },
+
+  status: {
+    type: String,
+    enum: ["Success", "Pending", "Failed"],
+    default: "Success",
     required: true,
   },
 

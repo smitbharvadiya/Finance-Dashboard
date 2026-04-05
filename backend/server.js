@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import User from './models/user.js';
 import connectDB from "./config/db.js";
+import record from './routes/record.js';
 
 connectDB();
 
@@ -19,6 +20,8 @@ app.use(cors({
     origin: "http://localhost:5173",
     credentials: true
 }));
+
+app.use("/record", record);
 
 app.get('/', (req, res) => {
     res.send("Backend dashboard");
@@ -54,7 +57,11 @@ app.post("/register", async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        res.cookie("token", token);
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax"
+        });
 
         res.status(201).json({
             message: 'User Created Successfully',
@@ -87,7 +94,11 @@ app.post("/login", async (req, res) => {
             { expiresIn: '1h' }
         );
 
-        res.cookie("token", token);
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax"
+        });
 
         return res.status(200).json({ message: "Login successful" });
 
@@ -98,7 +109,7 @@ app.post("/login", async (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-    
+
     res.clearCookie("token");
 
     res.json({ message: "Logout Succesfull" });
