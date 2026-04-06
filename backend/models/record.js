@@ -18,6 +18,7 @@ const recordSchema = new Schema({
   amount: {
     type: Number,
     required: true,
+    min: [0.01, "Amount must be greater than zero"]
   },
 
   type: {

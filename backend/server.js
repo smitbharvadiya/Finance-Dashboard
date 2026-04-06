@@ -11,6 +11,7 @@ import connectDB from "./config/db.js";
 import recordRoutes from './routes/record.js';
 import summaryRoutes from './routes/analytics.js';
 import verifyToken from './middleware/verifyToken.js';
+import errorHandler from './middleware/errorHandler.js';
 
 connectDB();
 
@@ -26,6 +27,7 @@ app.use(cors({
 app.use("/record", recordRoutes);
 app.use("/summary", summaryRoutes);
 
+
 app.get('/', (req, res) => {
     res.send("Backend dashboard");
 });
@@ -34,12 +36,24 @@ app.post("/register", async (req, res) => {
 
     const { name, email, password } = req.body;
 
+    if (!name?.trim() || !email?.trim() || !password) {
+        return res.status(400).json({
+            message: "Name, email, and password are required",
+        });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({
+            message: "Password must be at least 6 characters",
+        });
+    }
+
     try {
 
         const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            return res.status(400).json({
+            return res.status(409).json({
                 message: "User already exists"
             });
         }
@@ -92,18 +106,36 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email?.trim() || !password) {
+        return res.status(400).json({
+            message: "Email and password are required",
+            code: "MISSING_FIELDS"
+        });
+    }
+
     try {
-        const user = await User.findOne({ email: req.body.email })
-        if (!user) return res.status(400).json({ message: "User Not Found!" });
+        const user = await User.findOne({ email: email.toLowerCase().trim() })
 
-        const isMatch = await bcrypt.compare(req.body.password, user.password);
-
-        if (!isMatch) {
-            return res.status(401).json({ message: "Invalid password!" });
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email or password",  
+            });
         }
 
         if (user.status === "inactive") {
-            return res.status(403).json({ message: "Account is inactive" });
+            return res.status(403).json({
+                message: "This account has been deactivated",
+            });
+        }
+
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ 
+                message: "Invalid password!" 
+            });
         }
 
         const token = jwt.sign(
@@ -171,6 +203,12 @@ app.post("/logout", (req, res) => {
 
     res.json({ message: "Logout Succesfull" });
 });
+
+app.use((req, res) => {
+    res.status(404).json({ message: "Route not found" });
+});
+
+app.use(errorHandler);
 
 app.listen(3000, () => {
     console.log("The server is running on port 3000");

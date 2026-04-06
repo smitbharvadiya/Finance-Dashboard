@@ -2,10 +2,11 @@ import express from 'express';
 import Record from '../models/record.js';
 import verifyToken from '../middleware/verifyToken.js';
 import { requireRoles } from '../middleware/roleMiddleware.js';
+import { validateRecord } from '../middleware/validateRecord.js';
 
 const router = express.Router();
 
-router.post("/add", verifyToken, requireRoles("admin"), async (req, res) => {
+router.post("/add", verifyToken, requireRoles("admin"), validateRecord, async (req, res) => {
     const userId = req.userId;
     const recordData = req.body;
 
