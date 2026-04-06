@@ -8,7 +8,8 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import User from './models/user.js';
 import connectDB from "./config/db.js";
-import record from './routes/record.js';
+import recordRoutes from './routes/record.js';
+import summaryRoutes from './routes/analytics.js';
 
 connectDB();
 
@@ -21,7 +22,8 @@ app.use(cors({
     credentials: true
 }));
 
-app.use("/record", record);
+app.use("/record", recordRoutes);
+app.use("/summary", summaryRoutes);
 
 app.get('/', (req, res) => {
     res.send("Backend dashboard");
@@ -52,7 +54,11 @@ app.post("/register", async (req, res) => {
         });
 
         const token = jwt.sign(
-            { id: createdUser._id, email: createdUser.email },
+            {
+                id: createdUser._id,
+                email: createdUser.email,
+                role: createdUser.role
+            },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
@@ -89,7 +95,11 @@ app.post("/login", async (req, res) => {
         }
 
         const token = jwt.sign(
-            { id: user._id, email: user.email },
+            {
+                id: createdUser._id,
+                email: createdUser.email,
+                role: createdUser.role
+            },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
