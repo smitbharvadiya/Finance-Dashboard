@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import Record from "../models/record.js";
 import verifyToken from "../middleware/verifyToken.js";
+import { requireRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
@@ -27,7 +28,7 @@ function fillWeek(keys, rows) {
     });
 }
 
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, requireRoles("analyst", "admin"), async (req, res) => {
     try {
         if (!mongoose.Types.ObjectId.isValid(req.userId)) {
             return res.status(400).json({ error: "Invalid user id" });

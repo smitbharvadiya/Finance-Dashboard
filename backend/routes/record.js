@@ -1,10 +1,11 @@
 import express from 'express';
 import Record from '../models/record.js';
 import verifyToken from '../middleware/verifyToken.js';
+import { requireRoles } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-router.post("/add", verifyToken, async (req, res) => {
+router.post("/add", verifyToken, requireRoles("admin"), async (req, res) => {
     const userId = req.userId;
     const recordData = req.body;
 
@@ -27,7 +28,7 @@ router.post("/add", verifyToken, async (req, res) => {
     }
 });
 
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", verifyToken, requireRoles("viewer", "analyst", "admin"), async (req, res) => {
 
     try {
         const records = await Record.find({ createdBy: req.userId }).sort({ date: -1 });
@@ -43,7 +44,7 @@ router.get("/", verifyToken, async (req, res) => {
 
 });
 
-router.patch("/update/:id", verifyToken, async (req, res) => {
+router.patch("/update/:id", verifyToken, requireRoles("admin"), async (req, res) => {
     const { id } = req.params;
     const { amount, type, category, status, date, note } = req.body;
 
@@ -67,7 +68,7 @@ router.patch("/update/:id", verifyToken, async (req, res) => {
 
 });
 
-router.delete("/delete/:id", verifyToken, async (req, res) => {
+router.delete("/delete/:id", verifyToken, requireRoles("admin"), async (req, res) => {
     const { id } = req.params;
 
     try {

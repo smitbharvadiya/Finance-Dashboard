@@ -14,8 +14,7 @@ function WeeklyTrend({ series }) {
     return (
         <div className="bg-black text-white p-8 rounded-[2.5rem] shadow-xl shadow-black/10 flex flex-col gap-6">
             <div>
-                <h3 className="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-50 mb-2">Weekly</h3>
-                <p className="text-lg font-semibold tracking-tight">Net flow by day (UTC)</p>
+                <h3 className="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-50 mb-2">Weekly Trend</h3>
             </div>
             <div className="flex items-end justify-between gap-1 sm:gap-2 min-h-[7rem]">
                 {series.length === 0 ? (
@@ -59,6 +58,8 @@ const Dashboard = () => {
     const [fetching, setFetching] = useState(true);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [stats, setStats] = useState(null);
+    const [role, setRole] = useState(null);
+    const [sessionReady, setSessionReady] = useState(false);
     const [formData, setFormData] = useState({
         amount: "",
         type: "expense",
@@ -94,6 +95,10 @@ const Dashboard = () => {
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
             });
+            if (!res.ok) {
+                setStats(null);
+                return;
+            }
             const data = await res.json();
             setStats(data);
         } catch (err) {
@@ -102,9 +107,41 @@ const Dashboard = () => {
     };
 
     useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch("http://localhost:3000/me", { 
+                    method: "GET",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include" 
+                });
+
+                if (!res.ok) {
+                    navigate("/login");
+                    return;
+                }
+
+                const data = await res.json();
+
+                if (cancelled) return;
+
+                setRole(data.user?.role ?? "viewer");
+                setSessionReady(true);
+
+            } catch {
+                navigate("/login");
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [navigate]);
+
+    useEffect(() => {
+        if (!sessionReady || !role) return;
         fetchRecords();
-        fetchSummary();
-    }, []);
+        if (role === "analyst" || role === "admin") fetchSummary();
+    }, [sessionReady, role]);
 
     const handleAddRecord = async (e) => {
         e.preventDefault();
@@ -163,9 +200,22 @@ const Dashboard = () => {
         }
     };
 
+    const canViewAnalytics = role === "analyst" || role === "admin";
+    const canManageRecords = role === "admin";
+
     const metrics = stats?.metrics || { totalIncome: 0, totalExpense: 0, netBalance: 0 };
     const categoryData = stats?.categories || [];
     const weeklySeries = Array.isArray(stats?.trends) ? stats.trends : [];
+
+    const tableCols = canManageRecords ? 5 : 4;
+
+    if (!sessionReady) {
+        return (
+            <div className="min-h-screen bg-[#fafafa] flex items-center justify-center font-sans">
+                <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#fafafa] text-slate-900 font-sans pb-20 relative overflow-x-hidden">
@@ -181,6 +231,9 @@ const Dashboard = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hidden sm:inline">
+                        {role}
+                    </span>
                     <button onClick={handleLogout} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
                         <LogOut size={18} />
                     </button>
@@ -196,48 +249,59 @@ const Dashboard = () => {
                         <h1 className="text-4xl font-semibold tracking-tight">Vault Overview</h1>
                         <p className="text-slate-400 text-sm mt-1">Real-time tracking of institutional flow.</p>
                     </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsPanelOpen(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-black/10 active:scale-95"
-                    >
-                        <Plus size={16} /> New Entry
-                    </button>
+                    {canManageRecords && (
+                        <button
+                            type="button"
+                            onClick={() => setIsPanelOpen(true)}
+                            className="flex items-center gap-2 px-6 py-3 bg-black text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-black/10 active:scale-95"
+                        >
+                            <Plus size={16} /> New Entry
+                        </button>
+                    )}
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    <StatCard label="Total Liquidity" value={metrics.netBalance} icon={<Wallet size={20} />} color="bg-black text-white" />
-                    <StatCard label="Inflow" value={metrics.totalIncome} icon={<ArrowUpRight size={20} />} color="bg-white text-emerald-600" />
-                    <StatCard label="Outflow" value={metrics.totalExpense} icon={<ArrowDownLeft size={20} />} color="bg-white text-slate-900" />
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-                    <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm">
-                        <h3 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-6">Allocation by Category</h3>
-                        <div className="space-y-4">
-                            {categoryData.length > 0 ? (
-                                categoryData.map((item) => (
-                                    <div key={item._id} className="flex justify-between items-center">
-                                        <span className="text-sm font-bold text-slate-700 uppercase tracking-tight">{item._id}</span>
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-black rounded-full"
-                                                    style={{ width: `${(item.total / (metrics.totalIncome || 1)) * 100}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-medium tabular-nums">${item.total.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-slate-300 text-xs italic">No data analyzed yet.</p>
-                            )}
+                {canViewAnalytics ? (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                            <StatCard label="Total Liquidity" value={metrics.netBalance} icon={<Wallet size={20} />} color="bg-black text-white" />
+                            <StatCard label="Inflow" value={metrics.totalIncome} icon={<ArrowUpRight size={20} />} color="bg-white text-emerald-600" />
+                            <StatCard label="Outflow" value={metrics.totalExpense} icon={<ArrowDownLeft size={20} />} color="bg-white text-slate-900" />
                         </div>
-                    </div>
 
-                    <WeeklyTrend series={weeklySeries} />
-                </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+                            <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-sm">
+                                <h3 className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400 mb-6">Allocation by Category</h3>
+                                <div className="space-y-4">
+                                    {categoryData.length > 0 ? (
+                                        categoryData.map((item) => (
+                                            <div key={item._id} className="flex justify-between items-center">
+                                                <span className="text-sm font-bold text-slate-700 uppercase tracking-tight">{item._id}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-black rounded-full"
+                                                            style={{ width: `${(item.total / (metrics.totalIncome || 1)) * 100}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-sm font-medium tabular-nums">${item.total.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-slate-300 text-xs italic">No data analyzed yet.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <WeeklyTrend series={weeklySeries} />
+                        </div>
+                    </>
+                ) : (
+                    <div className="mb-12 rounded-[2.5rem] border border-slate-100 bg-white p-8 text-sm text-slate-500">
+                        Analytics (summary, categories, weekly trends) are available to <span className="font-semibold text-slate-800">analyst</span> and{" "}
+                        <span className="font-semibold text-slate-800">admin</span> roles. You can still view the ledger below.
+                    </div>
+                )}
 
                 <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
                     <table className="w-full text-left border-collapse">
@@ -247,13 +311,13 @@ const Dashboard = () => {
                                 <th className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-400">Allocation / Note</th>
                                 <th className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-400">Status</th>
                                 <th className="px-6 py-6 text-[10px] uppercase tracking-[0.2em] font-extrabold text-slate-400 text-right">Amount (USD)</th>
-                                <th className="pl-6 pr-10 py-6" />
+                                {canManageRecords && <th className="pl-6 pr-10 py-6" />}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
                             {fetching ? (
                                 <tr>
-                                    <td colSpan={5} className="p-32 text-center">
+                                    <td colSpan={tableCols} className="p-32 text-center">
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
                                             <p className="text-[10px] uppercase tracking-widest font-bold text-slate-300">Syncing Ledger...</p>
@@ -262,7 +326,7 @@ const Dashboard = () => {
                                 </tr>
                             ) : records.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="p-20 text-center text-slate-400 italic text-sm">
+                                    <td colSpan={tableCols} className="p-20 text-center text-slate-400 italic text-sm">
                                         No transactions found in this vault.
                                     </td>
                                 </tr>
@@ -305,15 +369,17 @@ const Dashboard = () => {
                                             </div>
                                             <div className="text-[10px] font-bold uppercase text-slate-300 tracking-widest">{row.type}</div>
                                         </td>
-                                        <td className="pl-6 pr-10 py-7 text-right">
-                                            <button
-                                                type="button"
-                                                onClick={() => deleteRecord(row._id)}
-                                                className="p-2 opacity-0 group-hover:opacity-100 bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-all duration-200"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
+                                        {canManageRecords && (
+                                            <td className="pl-6 pr-10 py-7 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => deleteRecord(row._id)}
+                                                    className="p-2 opacity-0 group-hover:opacity-100 bg-red-50 text-red-400 hover:text-red-600 rounded-xl transition-all duration-200"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </td>
+                                        )}
                                     </tr>
                                 ))
                             )}
@@ -322,6 +388,7 @@ const Dashboard = () => {
                 </div>
             </main>
 
+            {canManageRecords && (
             <div
                 className={`fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-500 ease-in-out ${
                     isPanelOpen ? "translate-x-0" : "translate-x-full"
@@ -407,7 +474,8 @@ const Dashboard = () => {
                     </form>
                 </div>
             </div>
-            {isPanelOpen && (
+            )}
+            {canManageRecords && isPanelOpen && (
                 <div
                     role="presentation"
                     onClick={() => setIsPanelOpen(false)}

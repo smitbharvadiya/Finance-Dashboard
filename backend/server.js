@@ -10,6 +10,7 @@ import User from './models/user.js';
 import connectDB from "./config/db.js";
 import recordRoutes from './routes/record.js';
 import summaryRoutes from './routes/analytics.js';
+import verifyToken from './middleware/verifyToken.js';
 
 connectDB();
 
@@ -31,7 +32,7 @@ app.get('/', (req, res) => {
 
 app.post("/register", async (req, res) => {
 
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     try {
 
@@ -50,7 +51,7 @@ app.post("/register", async (req, res) => {
             name,
             email,
             password: hash,
-            role
+            role: "viewer"
         });
 
         const token = jwt.sign(
@@ -69,9 +70,16 @@ app.post("/register", async (req, res) => {
             sameSite: "lax"
         });
 
+        const safeUser = {
+            id: createdUser._id,
+            name: createdUser.name,
+            email: createdUser.email,
+            role: createdUser.role
+        };
+
         res.status(201).json({
             message: 'User Created Successfully',
-            user: createdUser,
+            user: safeUser,
             token: token
         });
 
@@ -94,11 +102,15 @@ app.post("/login", async (req, res) => {
             return res.status(401).json({ message: "Invalid password!" });
         }
 
+        if (user.status === "inactive") {
+            return res.status(403).json({ message: "Account is inactive" });
+        }
+
         const token = jwt.sign(
             {
-                id: createdUser._id,
-                email: createdUser.email,
-                role: createdUser.role
+                id: user._id,
+                email: user.email,
+                role: user.role
             },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
@@ -110,10 +122,45 @@ app.post("/login", async (req, res) => {
             sameSite: "lax"
         });
 
-        return res.status(200).json({ message: "Login successful" });
+        return res.status(200).json({
+            message: "Login successful",
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
 
     } catch (err) {
         console.log("Login Error: ", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
+app.get("/me", verifyToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select("name email role status");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.status === "inactive") {
+            return res.status(403).json({ message: "Account is inactive" });
+        }
+
+        return res.status(200).json({
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (err) {
+        console.log("Me Error: ", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 });
