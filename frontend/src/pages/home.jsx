@@ -6,16 +6,13 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-black selection:text-white">
-      {/* Subtle Background Grid */}
+      
       <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" 
            style={{ backgroundImage: `radial-gradient(#000 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
 
-      {/* Navigation */}
       <nav className="relative z-10 flex justify-between items-center px-8 py-10 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 group cursor-pointer">
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center transition-transform group-hover:rotate-12">
-            <div className="w-3 h-[1px] bg-white rotate-45 absolute" />
-            <div className="w-3 h-[1px] bg-white -rotate-45 absolute" />
           </div>
           <span className="font-bold tracking-tighter text-2xl uppercase italic">Equity.</span>
         </div>
@@ -29,13 +26,13 @@ const Home = () => {
         <div className="flex gap-4">
           <button 
             onClick={() => navigate("/login")}
-            className="text-xs font-bold uppercase tracking-widest px-6 py-2 hover:text-blue-600 transition-colors"
+            className="text-xs font-bold uppercase tracking-widest px-6 py-2 hover:text-blue-600 transition-colors cursor-pointer"
           >
             Login
           </button>
           <button 
             onClick={() => navigate("/register")}
-            className="bg-black text-white text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-black/10 active:scale-95"
+            className="bg-black text-white text-xs font-bold uppercase tracking-widest px-8 py-3 rounded-full hover:bg-slate-800 transition-all shadow-lg shadow-black/10 active:scale-95 cursor-pointer"
           >
             Get Started
           </button>
@@ -67,15 +64,15 @@ const Home = () => {
             <div className="flex items-center gap-6">
               <button 
                 onClick={() => navigate("/register")}
-                className="group flex items-center gap-3 bg-black text-white pl-8 pr-2 py-2 rounded-full font-medium transition-all hover:pr-4"
+                className="group flex items-center gap-3 bg-black text-white pl-8 pr-2 py-2 rounded-full font-medium transition-all hover:pr-4 cursor-pointer"
               >
                 Start your portfolio
                 <div className="bg-white/10 p-2 rounded-full group-hover:bg-white group-hover:text-black transition-colors">
                   <ArrowUpRight size={20} />
                 </div>
               </button>
-              <button className="text-sm font-bold uppercase tracking-widest border-b-2 border-black pb-1 hover:text-slate-500 hover:border-slate-300 transition-all">
-                View Methodology
+              <button onClick={() => navigate("/docs")} className="text-sm font-bold uppercase tracking-widest border-b-2 border-black pb-1 hover:text-slate-500 hover:border-slate-300 transition-all cursor-pointer">
+                View Documentation
               </button>
             </div>
           </section>

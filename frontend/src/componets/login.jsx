@@ -24,7 +24,7 @@ const Login = () => {
         try {
             setLoading(true);
             
-            const res = await fetch("http://localhost:3000/login", {
+            const res = await fetch("http://localhost:3000/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -52,15 +52,11 @@ const Login = () => {
     return (
         <div className="min-h-screen bg-white text-slate-900 flex flex-col items-center justify-center font-sans">
 
-            {/* Brand Header */}
             <nav className="absolute top-0 w-full p-8 flex justify-between items-center">
                 <div className="flex items-center gap-2" onClick={() => navigate("/")}>
                     <div className="w-6 h-6 bg-black rounded-full" />
-                    <span className="font-bold tracking-tighter text-xl">EQUITY.</span>
+                    <span className="font-bold tracking-tighter text-xl cursor-pointer">EQUITY.</span>
                 </div>
-                <button className="text-sm font-medium text-slate-500 hover:text-black transition-colors">
-                    Log In
-                </button>
             </nav>
 
             <div className="w-full max-w-[360px] px-6">
@@ -84,7 +80,6 @@ const Login = () => {
 
                 <form onSubmit={handleLogin} className="space-y-8">
                     <div className="space-y-5">
-                        {/* Email Input */}
                         <div className="group relative border-b border-slate-100 focus-within:border-black transition-all duration-300">
                             <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-slate-400 group-focus-within:text-black">
                                 Account ID
@@ -103,7 +98,6 @@ const Login = () => {
                             </div>
                         </div>
 
-                        {/* Password Input */}
                         <div className="group relative border-b border-slate-100 focus-within:border-black transition-all duration-300">
                             <div className="flex justify-between items-end">
                                 <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-slate-400 group-focus-within:text-black">
