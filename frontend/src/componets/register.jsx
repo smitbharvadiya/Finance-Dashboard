@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Mail, Lock, User, Fingerprint } from "lucide-react";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const Register = () => {
 
@@ -27,7 +28,7 @@ const Register = () => {
         try {
             setLoading(true);
 
-            const res = await fetch("http://localhost:3000/auth/register", {
+            const res = await fetch(`${API_BASE}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

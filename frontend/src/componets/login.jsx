@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Mail, Lock, ShieldCheck, Loader2 } from "lucide-react";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 const Login = () => {
 
@@ -24,7 +25,7 @@ const Login = () => {
         try {
             setLoading(true);
             
-            const res = await fetch("http://localhost:3000/auth/login", {
+            const res = await fetch(`${API_BASE}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

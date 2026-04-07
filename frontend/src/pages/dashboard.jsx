@@ -6,6 +6,7 @@ import {
     ChevronLeft, ChevronRight, Search
 } from "lucide-react";
 
+
 function weekdayShort(period) {
     return new Date(`${period}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "short" });
 }
@@ -76,6 +77,8 @@ const Dashboard = () => {
     const [formErrors, setFormErrors] = useState([]);
     const [deleteError, setDeleteError] = useState(null);
 
+    const API_BASE = import.meta.env.VITE_API_BASE;
+
     const navigate = useNavigate();
 
     const fetchRecords = useCallback(async (page = 1, activeFilters = {}) => {
@@ -86,7 +89,7 @@ const Dashboard = () => {
             if (activeFilters.status) params.set("status", activeFilters.status);
             if (activeFilters.search?.trim()) params.set("search", activeFilters.search.trim());
 
-            const res = await fetch(`http://localhost:3000/record/?${params}`, {
+            const res = await fetch(`${API_BASE}/record/?${params}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -117,7 +120,7 @@ const Dashboard = () => {
 
     const fetchSummary = async () => {
         try {
-            const res = await fetch("http://localhost:3000/summary", {
+            const res = await fetch(`${API_BASE}/summary`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
@@ -137,7 +140,7 @@ const Dashboard = () => {
         let cancelled = false;
         (async () => {
             try {
-                const res = await fetch("http://localhost:3000/auth/me", {
+                const res = await fetch(`${API_BASE}/auth/me`, {
                     method: "GET",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include"
@@ -186,7 +189,7 @@ const Dashboard = () => {
         setSubmitting(true);
 
         try {
-            const res = await fetch("http://localhost:3000/record/add", {
+            const res = await fetch(`${API_BASE}/record/add`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...formData, amount }),
@@ -212,7 +215,7 @@ const Dashboard = () => {
         if (!window.confirm("Permanently delete this record?")) return;
         setDeleteError(null);
         try {
-            const res = await fetch(`http://localhost:3000/record/delete/${id}`, {
+            const res = await fetch(`${API_BASE}/record/delete/${id}`, {
                 method: "DELETE",
                 credentials: "include"
             });
@@ -231,7 +234,7 @@ const Dashboard = () => {
     const handleLogout = async () => {
         if (!window.confirm("Are you sure you want to logout of VaultPay?")) return;
         try {
-            const res = await fetch("http://localhost:3000/logout", {
+            const res = await fetch(`${API_BASE}/logout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
