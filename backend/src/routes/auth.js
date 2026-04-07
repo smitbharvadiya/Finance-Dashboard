@@ -57,7 +57,8 @@ router.post("/register", async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             secure: true,
-            sameSite: "lax"
+            sameSite: "none",
+            maxAge: 3600000
         });
 
         const safeUser = {
@@ -133,7 +134,8 @@ router.post("/login", async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             secure: true,
-            sameSite: "lax"
+            sameSite: "none",  
+            maxAge: 3600000
         });
 
         return res.status(200).json({
