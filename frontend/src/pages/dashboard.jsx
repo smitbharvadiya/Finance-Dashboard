@@ -234,7 +234,7 @@ const Dashboard = () => {
     const handleLogout = async () => {
         if (!window.confirm("Are you sure you want to logout of VaultPay?")) return;
         try {
-            const res = await fetch(`${API_BASE}/logout`, {
+            const res = await fetch(`${API_BASE}/auth/logout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
